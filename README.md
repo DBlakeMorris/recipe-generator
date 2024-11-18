@@ -1,6 +1,6 @@
 # Grandma's AI Recipe Generator
 
-An AI-powered recipe generator that creates delicious recipes using Google's Gemini API.
+An AI-powered recipe generator that creates delicious recipes using Google's Gemini API - it was crafted for my Grandma as a quirky Xmas gift!
 
 ## Features
 - Generate recipe ideas from ingredients
