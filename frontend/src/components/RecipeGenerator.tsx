@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RefreshCw } from "lucide-react"
 
-const API_URL = 'http://localhost:8000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 interface Recipe {
   title: string
