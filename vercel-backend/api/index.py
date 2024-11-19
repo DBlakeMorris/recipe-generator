@@ -3,7 +3,6 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import google.generativeai as genai
 import json
-from mangum import Mangum
 from datetime import datetime
 import os
 
@@ -13,13 +12,12 @@ app = FastAPI()
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://dblakemorris.github.io", "http://localhost:3000"],
+    allow_origins=["*"],  # Allow all origins for testing
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Root endpoint for health check
 @app.get("/")
 async def root():
     return {"message": "Recipe Generator API is running"}
@@ -150,8 +148,6 @@ async def remove_recipe(request: Request):
 @app.get("/api/recipes")
 async def get_recipes():
     return JSONResponse({"recipes": [recipe['title'] for recipe in saved_recipes]})
-
-handler = Mangum(app)
 
 if __name__ == "__main__":
     import uvicorn
