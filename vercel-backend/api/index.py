@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import google.generativeai as genai
 import json
-from mangum import Adapter
+from mangum import Mangum
 from datetime import datetime
 import os
 
@@ -151,8 +151,7 @@ async def remove_recipe(request: Request):
 async def get_recipes():
     return JSONResponse({"recipes": [recipe['title'] for recipe in saved_recipes]})
 
-# Add Vercel handler
-handler = Adapter(app)
+handler = Mangum(app)
 
 if __name__ == "__main__":
     import uvicorn
