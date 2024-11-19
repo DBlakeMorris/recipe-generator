@@ -9,7 +9,10 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "main.py"
+      "dest": "/main.py"
     }
+  ],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/main.py" }
   ]
 }
