@@ -1,12 +1,16 @@
 # Grandma's AI Recipe Generator
 
-An AI-powered recipe generator that creates delicious recipes using Google's Gemini API - it was crafted for my Grandma as a quirky Xmas gift!
+An AI-powered recipe generator that creates delicious recipes using a Gemini API - it was crafted for my Grandma as a quirky Xmas gift! 
 
 ## Features
 - Generate recipe ideas from ingredients
 - Get detailed cooking instructions
 - Save favorite recipes
-- Beautiful UI with dark mode support
+- Intuitive UI
+
+## How to Use
+- Simply list the food ingredients of your choosing in the first box - ideally seperated with a comma (e.g., salmon, potatoes, peas)
+- For any special requests feel free to state your preferences such as "not spicy", "French style", "Marco Pierre-White inspired" or "serving only 3 people" - be as imaginitive and 'picky' as you'd like
 
 ## Live Demo
 https://dblakemorris.github.io/recipe-generator
