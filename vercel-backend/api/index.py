@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import google.generativeai as genai
 import json
+from mangum import Adapter 
 from datetime import datetime
 import os
 
