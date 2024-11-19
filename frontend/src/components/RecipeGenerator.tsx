@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RefreshCw } from "lucide-react"
 
-const API_URL = 'https://recipe-generator-zeta.vercel.app/api'
+const API_URL = 'https://recipe-generator-eight-pi.vercel.app'  // Use the domain URL
 
 interface Recipe {
   title: string
