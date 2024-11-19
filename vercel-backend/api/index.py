@@ -3,12 +3,9 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import google.generativeai as genai
 import json
-from mangum import Adapter 
+from mangum import Adapter
 from datetime import datetime
 import os
-
-# Configure the API
-genai.configure(api_key='AIzaSyCfM0vm3xCDM2U-UOL9X-eD_cIbqQ7peXk')
 
 # Initialize FastAPI
 app = FastAPI()
@@ -16,11 +13,19 @@ app = FastAPI()
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Allow frontend dev server
+    allow_origins=["https://dblakemorris.github.io", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Root endpoint for health check
+@app.get("/")
+async def root():
+    return {"message": "Recipe Generator API is running"}
+
+# Configure the API
+genai.configure(api_key='AIzaSyCfM0vm3xCDM2U-UOL9X-eD_cIbqQ7peXk')
 
 class RecipeGenerator:
     def __init__(self):
@@ -96,51 +101,11 @@ class RecipeGenerator:
         except Exception as e:
             return {"title": "Error", "content": str(e)}
 
-class PantryManager:
-    def __init__(self, pantry_file="grandmas_pantry.json"):
-        self.pantry_file = pantry_file
-        self.load_pantry()
-
-    def load_pantry(self):
-        """Load saved recipes from file"""
-        try:
-            with open(self.pantry_file, 'r') as f:
-                self.pantry = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            self.pantry = []
-
-    def save_pantry(self):
-        """Save recipes to file"""
-        with open(self.pantry_file, 'w') as f:
-            json.dump(self.pantry, f, indent=4)
-
-    def add_recipe(self, recipe_data):
-        """Add a recipe to the pantry"""
-        recipe_data['saved_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.pantry.append(recipe_data)
-        self.save_pantry()
-        return self.get_recipe_list()
-
-    def remove_recipe(self, recipe_title):
-        """Remove a recipe from the pantry"""
-        self.pantry = [r for r in self.pantry if r['title'] != recipe_title]
-        self.save_pantry()
-        return self.get_recipe_list()
-
-    def get_recipe_list(self):
-        """Get list of saved recipe titles"""
-        return [recipe['title'] for recipe in self.pantry]
-
-    def get_recipe(self, title):
-        """Get a specific recipe by title"""
-        for recipe in self.pantry:
-            if recipe['title'] == title:
-                return recipe
-        return None
-
-# Initialize recipe generator and pantry manager
+# Initialize recipe generator
 recipe_generator = RecipeGenerator()
-pantry_manager = PantryManager()
+
+# For Vercel, we'll keep recipes in memory (this will reset on deploy)
+saved_recipes = []
 
 # API Routes
 @app.post("/api/generate-titles")
@@ -162,8 +127,9 @@ async def generate_recipe(request: Request):
 @app.post("/api/save-recipe")
 async def save_recipe(request: Request):
     data = await request.json()
-    updated_list = pantry_manager.add_recipe(data)
-    return JSONResponse({"recipes": updated_list})
+    data['saved_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    saved_recipes.append(data)
+    return JSONResponse({"recipes": [recipe['title'] for recipe in saved_recipes]})
 
 @app.post("/api/remove-recipe")
 async def remove_recipe(request: Request):
@@ -173,16 +139,20 @@ async def remove_recipe(request: Request):
         recipe_title = data.get('title')
         if not recipe_title:
             return JSONResponse({"error": "Title is required"}, status_code=400)
-        updated_list = pantry_manager.remove_recipe(recipe_title)
-        return JSONResponse({"recipes": updated_list})
+        
+        global saved_recipes
+        saved_recipes = [r for r in saved_recipes if r['title'] != recipe_title]
+        return JSONResponse({"recipes": [recipe['title'] for recipe in saved_recipes]})
     except Exception as e:
         print("Error removing recipe:", e)
         return JSONResponse({"error": str(e)}, status_code=500)
 
 @app.get("/api/recipes")
 async def get_recipes():
-    recipes = pantry_manager.get_recipe_list()
-    return JSONResponse({"recipes": recipes})
+    return JSONResponse({"recipes": [recipe['title'] for recipe in saved_recipes]})
+
+# Add Vercel handler
+handler = Adapter(app)
 
 if __name__ == "__main__":
     import uvicorn
