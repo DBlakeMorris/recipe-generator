@@ -14,6 +14,8 @@ An AI-powered recipe generator that creates delicious recipes using a Gemini API
 - Select from a list of 5 recipes, should none be to your liking, tune the output by adding further information to the two boxes as appropriate. However any majoy changes (like how many people are to be served), simply reset and try again.
 - At the bottom of each generated recipe, there is a button "Save to Grandma's Pantry" click this for each of your favorte recipes for later use - held in the "Grandma's Pantry" tab!
 
+##
+
 ### LLM Integration
 - Optimized prompt engineering for consistent recipe formatting and content quality
 - Multi-stage response validation to ensure food safety and recipe completeness
