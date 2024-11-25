@@ -6,9 +6,19 @@ import json
 from datetime import datetime
 import os
 from time import sleep
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 # Initialize FastAPI
 app = FastAPI()
+
+@app.middleware("http")
+async def add_cors_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["Access-Control-Allow-Origin"] = "https://dblakemorris.github.io"
+    response.headers["Access-Control-Allow-Methods"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
 
 # Configure CORS
 app.add_middleware(
@@ -18,7 +28,7 @@ app.add_middleware(
         "https://dblakemorris.github.io/recipe-generator",
         "http://localhost:3000"  # for local development
     ],
-    allow_credentials=True,
+    allow_credentials=False, 
     allow_methods=["*"],
     allow_headers=["*"],
 )
