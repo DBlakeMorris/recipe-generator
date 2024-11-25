@@ -6,32 +6,33 @@ import json
 from datetime import datetime
 import os
 from time import sleep
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 # Initialize FastAPI
 app = FastAPI()
 
-@app.middleware("http")
-async def add_cors_headers(request, call_next):
-    response = await call_next(request)
-    response.headers["Access-Control-Allow-Origin"] = "https://dblakemorris.github.io"
-    response.headers["Access-Control-Allow-Methods"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "*"
-    return response
-
 # Configure CORS
+origins = [
+    "https://dblakemorris.github.io",
+    "https://dblakemorris.github.io/recipe-generator",
+    "http://localhost:3000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://dblakemorris.github.io",
-        "https://dblakemorris.github.io/recipe-generator",
-        "http://localhost:3000"  # for local development
-    ],
-    allow_credentials=False, 
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add explicit CORS headers middleware
+@app.middleware("http")
+async def add_cors_header(request, call_next):
+    response = await call_next(request)
+    response.headers['Access-Control-Allow-Origin'] = 'https://dblakemorris.github.io'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = '*'
+    return response
 
 @app.get("/")
 async def root():
@@ -147,12 +148,14 @@ recipe_generator = RecipeGenerator()
 # For Vercel, we'll keep recipes in memory (this will reset on deploy)
 saved_recipes = []
 
-# API Routes
+# API Routes with explicit CORS headers
 @app.post("/api/generate-titles")
 async def generate_titles(request: Request):
     data = await request.json()
     titles = recipe_generator.generate_titles(data['ingredients'], data.get('preferences'))
-    return JSONResponse({"titles": titles})
+    response = JSONResponse({"titles": titles})
+    response.headers['Access-Control-Allow-Origin'] = 'https://dblakemorris.github.io'
+    return response
 
 @app.post("/api/generate-recipe")
 async def generate_recipe(request: Request):
@@ -162,14 +165,18 @@ async def generate_recipe(request: Request):
         data['ingredients'], 
         data.get('preferences')
     )
-    return JSONResponse(recipe)
+    response = JSONResponse(recipe)
+    response.headers['Access-Control-Allow-Origin'] = 'https://dblakemorris.github.io'
+    return response
 
 @app.post("/api/save-recipe")
 async def save_recipe(request: Request):
     data = await request.json()
     data['saved_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     saved_recipes.append(data)
-    return JSONResponse({"recipes": [recipe['title'] for recipe in saved_recipes]})
+    response = JSONResponse({"recipes": [recipe['title'] for recipe in saved_recipes]})
+    response.headers['Access-Control-Allow-Origin'] = 'https://dblakemorris.github.io'
+    return response
 
 @app.post("/api/remove-recipe")
 async def remove_recipe(request: Request):
@@ -182,14 +189,20 @@ async def remove_recipe(request: Request):
         
         global saved_recipes
         saved_recipes = [r for r in saved_recipes if r['title'] != recipe_title]
-        return JSONResponse({"recipes": [recipe['title'] for recipe in saved_recipes]})
+        response = JSONResponse({"recipes": [recipe['title'] for recipe in saved_recipes]})
+        response.headers['Access-Control-Allow-Origin'] = 'https://dblakemorris.github.io'
+        return response
     except Exception as e:
         print("Error removing recipe:", e)
-        return JSONResponse({"error": str(e)}, status_code=500)
+        error_response = JSONResponse({"error": str(e)}, status_code=500)
+        error_response.headers['Access-Control-Allow-Origin'] = 'https://dblakemorris.github.io'
+        return error_response
 
 @app.get("/api/recipes")
 async def get_recipes():
-    return JSONResponse({"recipes": [recipe['title'] for recipe in saved_recipes]})
+    response = JSONResponse({"recipes": [recipe['title'] for recipe in saved_recipes]})
+    response.headers['Access-Control-Allow-Origin'] = 'https://dblakemorris.github.io'
+    return response
 
 if __name__ == "__main__":
     import uvicorn
