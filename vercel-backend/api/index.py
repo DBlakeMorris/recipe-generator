@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import google.generativeai as genai
 import json
 from datetime import datetime
 import os
+from time import sleep
 
 # Initialize FastAPI
 app = FastAPI()
@@ -23,7 +24,10 @@ async def root():
     return {"message": "Recipe Generator API is running"}
 
 # Configure the API
-genai.configure(api_key='AIzaSyCfM0vm3xCDM2U-UOL9X-eD_cIbqQ7peXk')
+api_key = os.getenv('GEMINI_API_KEY')
+if not api_key:
+    raise ValueError("GEMINI_API_KEY environment variable not set")
+genai.configure(api_key=api_key)
 
 class RecipeGenerator:
     def __init__(self):
@@ -36,9 +40,29 @@ class RecipeGenerator:
             print(f"Error in initialization: {str(e)}")
             self.model = None
 
+    def _handle_rate_limit(self, operation):
+        """Handle rate limiting with retries"""
+        max_retries = 3
+        retry_delay = 60  # seconds
+        
+        for attempt in range(max_retries):
+            try:
+                return operation()
+            except Exception as e:
+                if "RATE_LIMIT_EXCEEDED" in str(e):
+                    if attempt < max_retries - 1:
+                        print(f"Rate limit hit, waiting {retry_delay} seconds...")
+                        sleep(retry_delay)
+                        continue
+                    raise HTTPException(
+                        status_code=429,
+                        detail="Rate limit exceeded. Please try again in a minute."
+                    )
+                raise e
+
     def generate_titles(self, ingredients, preferences=None):
         """Generate 5 possible recipe titles using Gemini"""
-        try:
+        def generate():
             prompt = f"""
             Create 5 COMPLETELY DIFFERENT and unique recipe titles using these ingredients: {ingredients}
             {f'Considering these preferences: {preferences}' if preferences else ''}
@@ -64,13 +88,15 @@ class RecipeGenerator:
 
             return titles[:5]
 
+        try:
+            return self._handle_rate_limit(generate)
         except Exception as e:
             print(f"Error generating titles: {e}")
             return [f"Quick {ingredients.split(',')[0].capitalize()} Dish"] * 5
 
     def generate_full_recipe(self, title, ingredients, preferences=None):
         """Generate full recipe for selected title"""
-        try:
+        def generate():
             prompt = f"""
             Create a detailed recipe for: {title}
             Using these ingredients: {ingredients}
@@ -96,6 +122,8 @@ class RecipeGenerator:
             response = self.model.generate_content(prompt)
             return {"title": title, "content": response.text}
 
+        try:
+            return self._handle_rate_limit(generate)
         except Exception as e:
             return {"title": "Error", "content": str(e)}
 
