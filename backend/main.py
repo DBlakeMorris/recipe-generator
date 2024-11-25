@@ -24,7 +24,6 @@ app.add_middleware(
 async def root():
     return {"message": "Recipe Generator API is running"}
 
-<<<<<<< HEAD
 @app.get("/api")
 async def api_root():
     return {"message": "Recipe Generator API is running"}
@@ -33,12 +32,7 @@ async def api_root():
 api_key = os.getenv('GEMINI_API_KEY')
 if not api_key:
     raise ValueError("GEMINI_API_KEY environment variable not set")
-
 genai.configure(api_key=api_key)
-=======
-# Configure the API
-genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
->>>>>>> e90c22dc16f0d2ecc500f95fbbc274cb8e42ecea
 
 class RecipeGenerator:
     def __init__(self):
