@@ -30,9 +30,40 @@ type APIError = {
     message: string
 }
 
-// Your formatRecipeContent function remains the same
 const formatRecipeContent = (content: string) => {
-    // ... keeping your existing formatRecipeContent implementation
+  if (!content) return '';
+
+  let cleanContent = content
+    .replace(/^.*?\n.*?(?=Description|DESCRIPTION)/s, '')
+    .replace(/\*\*/g, '')
+    .replace(/\*/g, '')
+    
+    .replace(/(Description|DESCRIPTION)(\s*:?\s*)/g, '<div class="font-bold text-pink-600 mt-4">Description</div><div class="text-gray-700 mb-4">')
+    .replace(/(Preparation Time|PREPARATION TIME)(\s*:?\s*)/g, '<div class="font-bold text-pink-600 mt-4">Preparation Time</div><div class="text-gray-700">')
+    .replace(/(Cooking Time|COOKING TIME)(\s*:?\s*)/g, '<div class="font-bold text-pink-600 mt-4">Cooking Time</div><div class="text-gray-700">')
+    .replace(/(Servings|SERVINGS)(\s*:?\s*)/g, '<div class="font-bold text-pink-600 mt-4">Servings</div><div class="text-gray-700">')
+    
+    .replace(/(INGREDIENTS:|Ingredients:)/g, '<div class="font-bold text-pink-600 mt-6 mb-2">Ingredients</div><ul class="list-disc pl-6 space-y-2">')
+    .replace(/For the ([^:]+):/g, '<div class="font-semibold text-pink-500 mt-3">For the $1:</div>')
+    
+    .replace(/(INSTRUCTIONS:|Instructions:)/g, '</ul><div class="font-bold text-pink-600 mt-6 mb-2">Instructions</div><ol class="list-decimal pl-6 space-y-2">')
+    
+    .replace(/(TIPS:|Tips:)/g, '</ol><div class="font-bold text-pink-600 mt-6 mb-2">Tips</div><ul class="list-disc pl-6 space-y-2">')
+    
+    .replace(/^- /gm, '<li class="text-gray-700">')
+    .replace(/^\d+\.\s+/gm, '<li class="text-gray-700">')
+    
+    .split('\n')
+    .filter(line => line.trim())
+    .join('</li>\n')
+    + '</ul>';
+
+  cleanContent = cleanContent
+    .replace(/(<\/li>\s*){2,}/g, '</li>')
+    .replace(/(<\/ul>\s*){2,}/g, '</ul>')
+    .replace(/(<\/ol>\s*){2,}/g, '</ol>');
+
+  return cleanContent;
 };
 
 export default function RecipeGenerator() {
