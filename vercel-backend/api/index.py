@@ -15,7 +15,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://dblakemorris.github.io",
-        "https://dblakemorris.github.io/recipe-generator"
+        "https://dblakemorris.github.io/recipe-generator",
+        "http://localhost:3000"  # for local development
     ],
     allow_credentials=True,
     allow_methods=["*"],
