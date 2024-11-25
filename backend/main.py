@@ -24,7 +24,7 @@ async def root():
     return {"message": "Recipe Generator API is running"}
 
 # Configure the API
-genai.configure(api_key='AIzaSyCfM0vm3xCDM2U-UOL9X-eD_cIbqQ7peXk')
+genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
 
 class RecipeGenerator:
     def __init__(self):
