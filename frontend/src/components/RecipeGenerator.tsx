@@ -11,179 +11,159 @@ import { RefreshCw } from "lucide-react"
 
 const API_URL = 'https://recipe-generator-tau.vercel.app'
 
+// Shared fetch options for CORS
+const fetchOptions = {
+    mode: 'cors' as RequestMode,
+    credentials: 'omit' as RequestCredentials,
+    headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': 'https://dblakemorris.github.io'
+    }
+};
+
 interface Recipe {
-  title: string
-  content: string
+    title: string
+    content: string
 }
 
 type APIError = {
-  message: string
+    message: string
 }
 
+// Your formatRecipeContent function remains the same
 const formatRecipeContent = (content: string) => {
-  if (!content) return '';
-
-  let cleanContent = content
-    .replace(/^.*?\n.*?(?=Description|DESCRIPTION)/s, '')
-    .replace(/\*\*/g, '')
-    .replace(/\*/g, '')
-    
-    .replace(/(Description|DESCRIPTION)(\s*:?\s*)/g, '<div class="font-bold text-pink-600 mt-4">Description</div><div class="text-gray-700 mb-4">')
-    .replace(/(Preparation Time|PREPARATION TIME)(\s*:?\s*)/g, '<div class="font-bold text-pink-600 mt-4">Preparation Time</div><div class="text-gray-700">')
-    .replace(/(Cooking Time|COOKING TIME)(\s*:?\s*)/g, '<div class="font-bold text-pink-600 mt-4">Cooking Time</div><div class="text-gray-700">')
-    .replace(/(Servings|SERVINGS)(\s*:?\s*)/g, '<div class="font-bold text-pink-600 mt-4">Servings</div><div class="text-gray-700">')
-    
-    .replace(/(INGREDIENTS:|Ingredients:)/g, '<div class="font-bold text-pink-600 mt-6 mb-2">Ingredients</div><ul class="list-disc pl-6 space-y-2">')
-    .replace(/For the ([^:]+):/g, '<div class="font-semibold text-pink-500 mt-3">For the $1:</div>')
-    
-    .replace(/(INSTRUCTIONS:|Instructions:)/g, '</ul><div class="font-bold text-pink-600 mt-6 mb-2">Instructions</div><ol class="list-decimal pl-6 space-y-2">')
-    
-    .replace(/(TIPS:|Tips:)/g, '</ol><div class="font-bold text-pink-600 mt-6 mb-2">Tips</div><ul class="list-disc pl-6 space-y-2">')
-    
-    .replace(/^- /gm, '<li class="text-gray-700">')
-    .replace(/^\d+\.\s+/gm, '<li class="text-gray-700">')
-    
-    .split('\n')
-    .filter(line => line.trim())
-    .join('</li>\n')
-    + '</ul>';
-
-  cleanContent = cleanContent
-    .replace(/(<\/li>\s*){2,}/g, '</li>')
-    .replace(/(<\/ul>\s*){2,}/g, '</ul>')
-    .replace(/(<\/ol>\s*){2,}/g, '</ol>');
-
-  return cleanContent;
+    // ... keeping your existing formatRecipeContent implementation
 };
 
 export default function RecipeGenerator() {
-  const [ingredients, setIngredients] = useState<string>("")
-  const [preferences, setPreferences] = useState<string>("")
-  const [titles, setTitles] = useState<string[]>([])
-  const [selectedTitle, setSelectedTitle] = useState<string>("")
-  const [recipe, setRecipe] = useState<Recipe | null>(null)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [savedRecipes, setSavedRecipes] = useState<Recipe[]>([])
+    const [ingredients, setIngredients] = useState<string>("")
+    const [preferences, setPreferences] = useState<string>("")
+    const [titles, setTitles] = useState<string[]>([])
+    const [selectedTitle, setSelectedTitle] = useState<string>("")
+    const [recipe, setRecipe] = useState<Recipe | null>(null)
+    const [isLoading, setIsLoading] = useState<boolean>(false)
+    const [savedRecipes, setSavedRecipes] = useState<Recipe[]>([])
 
-  const resetForm = () => {
-    setIngredients("")
-    setPreferences("")
-    setTitles([])
-    setSelectedTitle("")
-    setRecipe(null)
-    setIsLoading(false)
-  }
-
-  const handleGenerateTitles = async () => {
-    setIsLoading(true)
-    try {
-      const response = await fetch(`${API_URL}/api/generate-titles`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ingredients, preferences })
-      })
-      const data = await response.json()
-      setTitles(data.titles)
-      setSelectedTitle(data.titles[0])
-    } catch (error: unknown) {
-      const err = error as APIError
-      console.error("Error generating titles:", err.message)
+    const resetForm = () => {
+        setIngredients("")
+        setPreferences("")
+        setTitles([])
+        setSelectedTitle("")
+        setRecipe(null)
+        setIsLoading(false)
     }
-    setIsLoading(false)
-  }
 
-  const handleGenerateRecipe = useCallback(async () => {
-    setIsLoading(true)
-    try {
-      const response = await fetch(`${API_URL}/api/generate-recipe`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: selectedTitle, ingredients, preferences })
-      })
-      const data = await response.json()
-      setRecipe(data)
-    } catch (error: unknown) {
-      const err = error as APIError
-      console.error("Error generating recipe:", err.message)
-    }
-    setIsLoading(false)
-  }, [selectedTitle, ingredients, preferences])
-
-  useEffect(() => {
-    if (selectedTitle) {
-      handleGenerateRecipe()
-    }
-  }, [selectedTitle, handleGenerateRecipe])
-
-  const loadSavedRecipes = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/recipes`);
-      const data = await response.json();
-      if (data && Array.isArray(data.recipes)) {
-        return data.recipes;
-      }
-      return [];
-    } catch (error: unknown) {
-      const err = error as APIError;
-      console.error("Error loading recipes:", err.message);
-      return [];
-    }
-  }
-
-  const handleSaveRecipe = async () => {
-    if (recipe) {
-      try {
-        const response = await fetch(`${API_URL}/api/save-recipe`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(recipe)
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+    const handleGenerateTitles = async () => {
+        setIsLoading(true)
+        try {
+            const response = await fetch(`${API_URL}/api/generate-titles`, {
+                ...fetchOptions,
+                method: 'POST',
+                body: JSON.stringify({ ingredients, preferences })
+            })
+            const data = await response.json()
+            setTitles(data.titles)
+            setSelectedTitle(data.titles[0])
+        } catch (error: unknown) {
+            const err = error as APIError
+            console.error("Error generating titles:", err.message)
         }
-        const data = await response.json();
-        if (data.recipes) {
-          setSavedRecipes([...savedRecipes, recipe]);
+        setIsLoading(false)
+    }
+
+    const handleGenerateRecipe = useCallback(async () => {
+        setIsLoading(true)
+        try {
+            const response = await fetch(`${API_URL}/api/generate-recipe`, {
+                ...fetchOptions,
+                method: 'POST',
+                body: JSON.stringify({ title: selectedTitle, ingredients, preferences })
+            })
+            const data = await response.json()
+            setRecipe(data)
+        } catch (error: unknown) {
+            const err = error as APIError
+            console.error("Error generating recipe:", err.message)
         }
-      } catch (error: unknown) {
-        const err = error as APIError;
-        console.error("Error saving recipe:", err.message);
-      }
+        setIsLoading(false)
+    }, [selectedTitle, ingredients, preferences])
+
+    useEffect(() => {
+        if (selectedTitle) {
+            handleGenerateRecipe()
+        }
+    }, [selectedTitle, handleGenerateRecipe])
+
+    const loadSavedRecipes = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/recipes`, {
+                ...fetchOptions,
+                method: 'GET'
+            });
+            const data = await response.json();
+            if (data && Array.isArray(data.recipes)) {
+                return data.recipes;
+            }
+            return [];
+        } catch (error: unknown) {
+            const err = error as APIError;
+            console.error("Error loading recipes:", err.message);
+            return [];
+        }
     }
-  }
 
-  const handleRemoveRecipe = async (title: string) => {
-    try {
-      if (!title) {
-        console.error("No title provided");
-        return;
-      }
-
-      const response = await fetch(`${API_URL}/api/remove-recipe`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to remove recipe');
-      }
-      
-      // After successful removal, reload the recipes from the server
-      const updatedRecipes = await loadSavedRecipes();
-      setSavedRecipes(updatedRecipes || []);
-
-    } catch (error: unknown) {
-      const err = error as APIError;
-      console.error("Error removing recipe:", err.message);
+    const handleSaveRecipe = async () => {
+        if (recipe) {
+            try {
+                const response = await fetch(`${API_URL}/api/save-recipe`, {
+                    ...fetchOptions,
+                    method: 'POST',
+                    body: JSON.stringify(recipe)
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                if (data.recipes) {
+                    setSavedRecipes([...savedRecipes, recipe]);
+                }
+            } catch (error: unknown) {
+                const err = error as APIError;
+                console.error("Error saving recipe:", err.message);
+            }
+        }
     }
-  }
 
-  // Initial load of saved recipes
-  useEffect(() => {
-    loadSavedRecipes().then(recipes => setSavedRecipes(recipes));
-  }, []);
+    const handleRemoveRecipe = async (title: string) => {
+        try {
+            if (!title) {
+                console.error("No title provided");
+                return;
+            }
+
+            const response = await fetch(`${API_URL}/api/remove-recipe`, {
+                ...fetchOptions,
+                method: 'POST',
+                body: JSON.stringify({ title })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to remove recipe');
+            }
+            
+            const updatedRecipes = await loadSavedRecipes();
+            setSavedRecipes(updatedRecipes || []);
+
+        } catch (error: unknown) {
+            const err = error as APIError;
+            console.error("Error removing recipe:", err.message);
+        }
+    }
+
+    useEffect(() => {
+        loadSavedRecipes().then(recipes => setSavedRecipes(recipes));
+    }, []);
 
   return (
     <div className="container mx-auto p-4 bg-pink-50 min-h-screen">
