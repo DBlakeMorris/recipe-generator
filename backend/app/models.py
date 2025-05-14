@@ -7,7 +7,7 @@ class RecipeGenerator:
         """Initialize the recipe generator with Gemini"""
         try:
             print("Initializing Gemini model...")
-            self.model = genai.GenerativeModel('gemini-pro')
+            self.model = genai.GenerativeModel('gemini-2.0-pro')
             print("Model initialized successfully!")
         except Exception as e:
             print(f"Error in initialization: {str(e)}")
